@@ -1,0 +1,87 @@
+
+
+```{r}
+
+library(dplyr)
+library(tsibbledata)
+library(feasts)
+# library(bayesforecast)
+library(ggplot2)
+
+
+hare_furs = pelt%>%select("Year","Hare")
+
+#Part A
+library(feasts)
+hare_furs%>% autoplot(Hare) +
+  labs(title = "Snowshoe Hare Furs Trade") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+#Part B
+library(fable)
+library(tsibble)
+library(stats)
+library(forecast)
+ 
+
+#From the equation, we can see that this is an ARIMA model with P=4, D = 0, Q = 0
+### P = 4 | D = 0 | Q = 0. The ARIMA model selects this automatically
+### p=4 means model uses 4 auto regressive terms
+### d=0 means differencing was not applied in this model.
+### q=0 means model 0 moving average terms were included in the model
+### Overall, model is Autoregressive moving Average model with 4 lagged autoregressive terms,
+### 0 moving average term and a constant term.
+
+#Q15.c
+hare_furs %>%
+  gg_tsdisplay(Hare, plot_type='partial')
+
+#Assumed Hare as the y variable
+
+#Why is this model appropriate?
+# From the ACF plot, we can see that autocorrelation is decreasing. The ACF plot is varying sinusoidally.
+#The data may follow an ARIMA(p,0,0) model if the ACF and PACF plots  show the following patterns:
+#- the ACF is exponentially decaying or sinusoidal;
+#- there is a significant spike at lag pin the PACF, but none beyond lag p. Here, we can see spike in the PACF, plot at lag = 4 which states that that model ARIMA(4,0,0) is appropriate.
+#Also there is no need for data differencing as the plot is horizontal. so d = 0. Data is stationary. 
+
+#Q15.d
+y1 = 30993 + 0.82*(15760) - 0.29*(81660) - 0.01*(89760) - 0.22*(82110)
+y2 = 30993 + 0.82*(y1) - 0.29*(15760) - 0.01*(81660) - 0.22*(89760)
+y3 = 30993 + 0.82*(y2) - 0.29*(y1) - 0.01*(15760) - 0.22*(81660)
+#y1,y2,y3 are the hare forecast for the next 3 years
+
+c(y1, y2, y3)
+
+#Q15.e
+hare_furs = pelt%>%select("Year","Hare")
+
+# Fit the ARIMA model
+hare_furs_arima <- Arima(hare_furs$Hare, order = c(4, 0, 0))
+
+### For our forecasts we will be using ARIMA model specified by part b of the question.
+### The model has order P=4|D=0|Q=0 meaning it is an autoregressive model with
+### 4 lagged autoregressive terms and a constant term
+
+# Generate forecast for next 3 years
+hare_furs_fc <- forecast(hare_furs_arima, h = 3)
+
+# Print the forecasts
+print(hare_furs_fc)
+
+#Print Manual Calculations
+print(c(y1, y2, y3))
+
+#Forecasts
+## 2051.574, 8223.143, 19387.960
+# Manual Calculations
+### 1273.00, 6902.66, 18161.21
+
+### As you can see we got pretty similar values for manual calculations and forecasts made by r. 
+### Slight difference between manual calculations and forecasts made by r are due to the fact that we
+### did not consider error terms in our calculation because they were not given.
+
+
+
+```
+
